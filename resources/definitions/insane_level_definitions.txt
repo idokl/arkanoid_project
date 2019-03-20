@@ -1,0 +1,91 @@
+# Level 0
+
+START_LEVEL
+level_name:easy start
+ball_velocities:-45,450
+background:color(white)
+paddle_speed:700
+paddle_width:150
+block_definitions:definitions/standard_block_definitions.txt
+blocks_start_x:80
+blocks_start_y:50
+row_height:50
+num_blocks:8
+START_BLOCKS
+-r-r-r
+-
+---b-b-b
+-
+-------------y
+-
+--------------g
+END_BLOCKS
+END_LEVEL
+
+
+# Level 1
+
+START_LEVEL
+level_name:Catch me if you can
+ball_velocities:2,700 5,650
+background:image(background_images/catch_me_if_you_can.jpg)
+paddle_speed:500
+paddle_width:70
+block_definitions:definitions/standard_block_definitions.txt
+blocks_start_x:25
+blocks_start_y:80
+row_height:25
+num_blocks:1
+START_BLOCKS
+-r-
+END_BLOCKS
+END_LEVEL
+
+
+# Level 2
+
+START_LEVEL
+level_name: Into the Matrix
+ball_velocities:-60,500 -45,500
+background:image(background_images/matrix.png)
+paddle_speed:500
+paddle_width:150
+block_definitions:definitions/into_the_matrix_definitions.txt
+blocks_start_x:25
+blocks_start_y:80
+row_height:25
+num_blocks:24
+START_BLOCKS
+-llll-
+-zzzz-
+-llll-
+zzzzzz
+zzllzz
+END_BLOCKS
+END_LEVEL
+
+
+
+
+
+# Level 3
+# the moon return
+
+START_LEVEL
+level_name:Insane Moon
+ball_velocities:45,450 -45,450
+background:image(background_images/night.jpg)
+paddle_speed:700
+paddle_width:150
+block_definitions:definitions/insane_three_block_definitions.txt
+blocks_start_x:25
+blocks_start_y:20
+row_height:100
+num_blocks:12
+START_BLOCKS
+--ilil--
+--lili--
+--iiii--
+END_BLOCKS
+END_LEVEL
+

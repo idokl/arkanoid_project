@@ -1,0 +1,256 @@
+package arkanoid;
+
+import animation.*;
+import core.*;
+import core.Counter;
+import core.Sprite;
+import geometry.*;
+import geometry.Rectangle;
+import io.LevelInformation;
+import biuoop.GUI;
+import biuoop.DrawSurface;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.List;
+
+/**
+ * arkanoid.GameLevel - put the game together (sprites, environment, gui, keyboard sensor).
+ */
+public class GameLevel implements animation {
+    private SpriteCollection spriteCollection;
+    private GameEnvironment gameEnvironment;
+    private ScoreIndicator scoreIndicator;
+    private LivesIndicator livesIndicator;
+    private GUI gui;
+    private Counter blockCounter;
+    private Counter ballCounter;
+    private Counter score;
+    private Counter numberOfLives;
+    private int width;
+    private int height;
+    private int borderThickness;
+    private AnimationRunner runner;
+    private boolean running;
+    private LevelInformation levelInformation;
+
+    public GameLevel(LevelInformation levelInformation){
+        this.spriteCollection = new SpriteCollection();
+        this.gameEnvironment = new GameEnvironment();
+        this.score = new Counter(0);
+        this.numberOfLives = new Counter(4);
+        this.scoreIndicator = new ScoreIndicator(this.score);
+        this.livesIndicator = new LivesIndicator(this.numberOfLives);
+        this.blockCounter = new Counter(0);
+        this.ballCounter = new Counter(0);
+        this.width = 800;
+        this.height = 600;
+        this.borderThickness = 20;
+        this.levelInformation = levelInformation;
+    }
+
+    /**
+     * @param c - add collodable objects (blocks and paddle).
+     */
+    public void addCollidable(Collidable c) {
+        this.gameEnvironment.addCollidable(c);
+    }
+
+    /**
+     * @param s - add sprites.
+     */
+    public void addSprite(Sprite s) {
+        this.spriteCollection.addSprite(s);
+    }
+
+    public void removeCollidable(Collidable c) {
+        this.gameEnvironment.removeCollidable(c);
+
+    }
+
+    public void removeSprite(Sprite s) {
+        this.spriteCollection.removeSprite(s);
+    }
+
+
+    public Counter getNumberOfLives() {
+        return this.numberOfLives;
+    }
+
+    /**
+     * Initialize a new game: create the Blocks, Balls and arkanoid.Paddle and add them to the game.
+     */
+    public void initialize() {
+        this.gui = new GUI("arkanoid", this.width, this.height);
+        this.makeBorders();
+        this.makeGameBlocks();
+        this.makePaddle();
+        this.scoreIndicator.addToGame(this);
+        this.livesIndicator.addToGame(this);
+        this.runner = new AnimationRunner(gui);
+    }
+
+    public void makeBalls(){
+        //create two balls and add them to the game.
+        Ball firstBall = new Ball(60, 260, 5, java.awt.Color.RED, this.gameEnvironment);
+        firstBall.setVelocity(4, 4);
+        this.ballCounter.increase(1);
+        firstBall.addToGame(this);
+        Ball secondBall = new Ball(40, 250, 5, java.awt.Color.RED, this.gameEnvironment);
+        secondBall.setVelocity(4, 4);
+        secondBall.addToGame(this);
+        this.ballCounter.increase(1);
+        Ball thirdBall = new Ball(50, 290, 5, java.awt.Color.RED, this.gameEnvironment);
+        thirdBall.setVelocity(4, 4);
+        thirdBall.addToGame(this);
+        this.ballCounter.increase(1);
+    }
+
+    public void makeBorders(){
+        BallRemover ballRemover = new BallRemover(this, this.ballCounter);
+        //create top border of the screen.
+        Rectangle recUp = new Rectangle((new Point(0, 20)), this.width, this.borderThickness);
+        Block blockUp = new Block(recUp, Color.blue, 0);
+        //create bottom border of the screen.
+        Rectangle deathRectangle = new Rectangle((new Point(10, this.height - this.borderThickness)), this.width, 0);
+        Block deathBlock = new Block(deathRectangle, Color.lightGray, 0);
+        deathBlock.addHitListener(ballRemover);
+        //create left border of the screen.
+        Rectangle recLeft = new Rectangle((new Point(0, borderThickness + borderThickness)), borderThickness, height);
+        Block blockLeft = new Block(recLeft, Color.blue, 0);
+        //create right border of the screen.
+        Rectangle recRight = new Rectangle((new Point(this.width - this.borderThickness, this.borderThickness + this.borderThickness)),
+                this.borderThickness, this.height);
+        Block blockRight = new Block(recRight, Color.blue, 0);
+        //add the borders to the game.
+        blockUp.addToGame(this);
+        blockLeft.addToGame(this);
+        blockRight.addToGame(this);
+        deathBlock.addToGame(this);
+
+
+    }
+
+    public void makePaddle(){
+        // create paddle and add it to game.
+        biuoop.KeyboardSensor keyboard = gui.getKeyboardSensor();
+        Rectangle paddle = new Rectangle((new Point(250, 575)), 100, 10);
+        Paddle pad1 = new Paddle(paddle, Color.orange, keyboard, this.width, this.borderThickness);
+        pad1.addToGame(this);
+    }
+
+    public void makeGameBlocks(){
+        BlockRemover blockRemover = new BlockRemover(this, this.blockCounter);
+        ScoreTrackingListener scoreTrackingListener = new ScoreTrackingListener(this.score);
+
+        //get different random colours for each row of blocks.
+        Random rand = new Random();
+        List<Color> colorLines = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            float r = rand.nextFloat();
+            float g = rand.nextFloat();
+            float b = rand.nextFloat();
+            java.awt.Color randomColor = new java.awt.Color(r, g, b);
+            colorLines.add(randomColor);
+        }
+        for (int i = 0; i < 12; i++) {
+            int blockSize = 50;
+            int startOfRaw = this.width-this.borderThickness-blockSize;
+            //create first row of blocks (from bottom to top) with 7 blocks and add it to the game.
+            if (i < 7) {
+                Rectangle sevenInLine = new Rectangle((new Point(startOfRaw - (blockSize * (i)), 290)), blockSize, 20);
+                Block blockSeven = new Block(sevenInLine, colorLines.get(0), 1);
+                blockSeven.addToGame(this);
+                blockSeven.addHitListener(blockRemover);
+                blockSeven.addHitListener(scoreTrackingListener);
+                this.blockCounter.increase(1);
+            } //create second row of blocks with 8 blocks and add it to the game.
+            if (i < 8) {
+                Rectangle eightInLine = new Rectangle((new Point(startOfRaw - (blockSize * (i)), 270)), blockSize, 20);
+                Block blockEight = new Block(eightInLine, colorLines.get(1), 1);
+                blockEight.addToGame(this);
+                this.blockCounter.increase(1);
+                blockEight.addHitListener(blockRemover);
+                blockEight.addHitListener(scoreTrackingListener);
+            } //create third row of blocks with 9 blocks and add it to the game.
+            if (i < 9) {
+                Rectangle nineInLine = new Rectangle((new Point(startOfRaw - (blockSize * (i)), 250)), blockSize, 20);
+                Block blockNine = new Block(nineInLine, colorLines.get(2), 1);
+                blockNine.addToGame(this);
+                this.blockCounter.increase(1);
+                blockNine.addHitListener(blockRemover);
+                blockNine.addHitListener(scoreTrackingListener);
+            }  //create fourth row of blocks with 10 blocks and add it to the game.
+            if (i < 10) {
+                Rectangle tenInLine = new Rectangle((new Point(startOfRaw - (blockSize * (i)), 230)), blockSize, 20);
+                Block blockTen = new Block(tenInLine, colorLines.get(3), 1);
+                blockTen.addToGame(this);
+                this.blockCounter.increase(1);
+                blockTen.addHitListener(blockRemover);
+                blockTen.addHitListener(scoreTrackingListener);
+            }  //create fifth row of blocks with 11 blocks and add it to the game.
+            if (i < 11) {
+                Rectangle elevenInLine = new Rectangle((new Point(startOfRaw - (blockSize * (i)), 210)), blockSize, 20);
+                Block blockEleven = new Block(elevenInLine, colorLines.get(4), 1);
+                blockEleven.addToGame(this);
+                this.blockCounter.increase(1);
+                blockEleven.addHitListener(blockRemover);
+                blockEleven.addHitListener(scoreTrackingListener);
+            }  //create sixth and last row of blocks with 12 blocks and add it to the game.
+            Rectangle twelveInLine = new Rectangle((new Point(startOfRaw - (blockSize * (i)), 190)), blockSize, 20);
+            Block blockTwelve = new Block(twelveInLine, colorLines.get(5), 2);
+            blockTwelve.addToGame(this);
+            this.blockCounter.increase(1);
+            blockTwelve.addHitListener(blockRemover);
+            blockTwelve.addHitListener(scoreTrackingListener);
+        }
+    }
+
+    public void run() {
+        do{
+            this.playOneTurn();
+        }while(this.getNumberOfLives().getValue() >= 0);
+        this.gui.close();
+    }
+
+    /**
+     * Run the game -- start the animation loop.
+     */
+    public void playOneTurn() {
+        this.makeBalls();
+       // this.runner.run(new arkanoid.CountdownAnimation(2,3,spriteCollection)); // countdown before turn starts.
+        this.running = true;
+        // use our runner to run the current animation -- which is one turn of
+        // the game.
+        this.runner.run(this);
+
+    }
+
+    public boolean shouldStop() {
+        return !this.running;
+    }
+
+    public void doOneFrame(DrawSurface d) {
+        // the logic from the previous playOneTurn method goes here.
+        // the `return` or `break` statements should be replaced with
+        // this.running = false;
+
+        //draw all sprites and notify them about the passing time.
+        this.spriteCollection.drawAllOn(d);
+        this.spriteCollection.notifyAllTimePassed();
+        biuoop.KeyboardSensor keyboard = gui.getKeyboardSensor();
+
+        if (this.blockCounter.getValue() == 0) {
+            this.score.increase(100);
+            this.gui.close();
+            this.running = false;
+        }
+        if (this.ballCounter.getValue() == 0) {
+            this.getNumberOfLives().decrease(1);
+            this.running = false;
+        }
+        if (keyboard.isPressed("p")) {
+            this.runner.run(new PauseScreen(keyboard));
+        }
+    }
+}
